@@ -3,22 +3,25 @@ title: 1. Single file
 layout: page
 ---
 
-<input id="photo" type="file">
+<input id="photo" type="file" />
 <div id="results"></div>
-<script>
-  async function loaded(reader) {
-    const response = await fetch('https://hf.space/embed/jph00/pets/+/api/predict/', {
-      method: "POST", body: JSON.stringify({ "data": [reader.result] }),
-      headers: { "Content-Type": "application/json" }
+
+<script type="module">
+  import { Client } from "https://cdn.jsdelivr.net/npm/@gradio/client/dist/index.min.js";
+
+  photo.addEventListener("input", async () => {
+    // This a blob (a file)
+    const file = photo.files[0];
+
+    const client = await Client.connect("andreas-yin/test-model");
+    const result = await client.predict("/predict", {
+      img: file, // send blob directly instead of base64 string
     });
-    const json = await response.json();
-    const label = json['data'][0]['confidences'][0]['label'];
-    results.innerHTML = `<br/><img src="${reader.result}" width="300"> <p>${label}</p>`
-  }
-  function read() {
-    const reader = new FileReader();
-    reader.addEventListener('load', () => loaded(reader))
-    reader.readAsDataURL(photo.files[0]);
-  }
-  photo.addEventListener('input', read);
+
+    const label = result.data[0].label;
+
+    // show photo preview
+    const url = URL.createObjectURL(file);
+    results.innerHTML = `<br/><img src="${url}" width="300"> <p>${label}</p>`;
+  });
 </script>
